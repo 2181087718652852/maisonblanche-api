@@ -19,7 +19,10 @@ async function main() {
       const routeName = file.replace(/\.(js|ts)$/, '');
       const filePath = path.join(functionsDir, file);
       
-      const handler = require(filePath);
+      let handler = require(filePath);
+      if (handler.default && typeof handler.default === 'function') {
+        handler = handler.default;
+      }
       
       fastify.all(`/v1/${routeName}`, async (request, reply) => {
         const req = {
@@ -37,9 +40,19 @@ async function main() {
           },
           json: (data) => {
             reply.send(data);
+            return res;
           },
           send: (data) => {
             reply.send(data);
+            return res;
+          },
+          setHeader: (name, value) => {
+            reply.header(name, value);
+            return res;
+          },
+          end: (data) => {
+            reply.send(data);
+            return res;
           }
         };
 
